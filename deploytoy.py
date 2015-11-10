@@ -7,10 +7,11 @@ import signal
 from functools import partial
 from os.path import dirname, realpath, join
 import os
+import sys
 
 logger = logging.getLogger('deploytoy')
 
-secret = b'yolo'
+secret = sys.argv[1].encode()
 enforce_secret = False
 
 queue = asyncio.Queue()
