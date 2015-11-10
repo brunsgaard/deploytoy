@@ -10,7 +10,7 @@ import os
 
 logger = logging.getLogger('deploytoy')
 
-secret = 'yolo'
+secret = b'yolo'
 enforce_secret = False
 
 queue = asyncio.Queue()
