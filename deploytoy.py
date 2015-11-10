@@ -71,8 +71,9 @@ async def queue_executer():
             continue
 
 
-def close(app, server, loop):
+def close(handler, app, server, loop):
     async def close_():
+        await handler.finish_connections(1.0)
         server.close()
         await server.wait_closed()
         await queue.put((None, None))
@@ -91,12 +92,14 @@ async def run(loop):
     app = web.Application(loop=loop)
     app.router.add_route('POST', '/', handle_web_request)
     app.register_on_finish(wait_for_executer)
-
+    handler = app.make_handler()
     server = await asyncio.ensure_future(loop.create_server(
-        app.make_handler(), '0.0.0.0', 5000))
+        handler, '0.0.0.0', 5000))
 
-    loop.add_signal_handler(signal.SIGTERM, partial(close, app, server, loop))
-    loop.add_signal_handler(signal.SIGINT, partial(close, app, server, loop))
+    loop.add_signal_handler(
+        signal.SIGTERM, partial(close, handler, app, server, loop))
+    loop.add_signal_handler(
+        signal.SIGINT, partial(close, handler, app, server, loop))
     logger.debug('Deploytoy has started')
 
 
