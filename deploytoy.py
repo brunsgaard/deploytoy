@@ -36,6 +36,8 @@ async def handle_web_request(request):
         raise web.HTTPBadRequest(
             reason="'X-Github-Event' header missing")
 
+    request.headers['X-Github-Delivery']
+
     await queue.put((event, request))
     return web.Response(status=201)
 
@@ -75,6 +77,7 @@ def close(app, server, loop):
         await queue.put((None, None))
         await app.finish()
         loop.stop()
+        logger.debug('Deploytoy stopped gracefully')
     asyncio.ensure_future(close_())
 
 
@@ -93,6 +96,9 @@ async def run(loop):
 
     loop.add_signal_handler(signal.SIGTERM, partial(close, app, server, loop))
     loop.add_signal_handler(signal.SIGINT, partial(close, app, server, loop))
+    signal.siginterrupt(signal.SIGTERM, False)
+    signal.siginterrupt(signal.SIGINT, False)
+    logger.debug('Deploytoy has started')
 
 
 @eventhandler
@@ -115,23 +121,21 @@ async def push(request):
     proc = await asyncio.create_subprocess_exec(
         script,
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE)
+        stderr=asyncio.subprocess.STDOUT,
+        start_new_session=True
+    )
 
     try:
-        await asyncio.wait_for(proc.wait(), 5*60)
+        await asyncio.wait_for(proc.communicate(), 5*60)
     except asyncio.TimeoutError:
         proc.kill()
         logger.critical('Script timed out and was killed')
 
-    stdout = await proc.stdout.read()
-    stdout = stdout.decode().strip()
-    if stdout:
-        logger.info(stdout)
     if proc.returncode != 0:
-        stderr = await proc.stderr.read()
-        stderr = stderr.decode().strip()
+        stdout = await proc.stdout.read()
+        stdout = stdout.decode().strip()
         if stdout:
-            logger.critical(stderr)
+            logger.critical(stdout)
 
 
 if __name__ == '__main__':
