@@ -48,9 +48,9 @@ async def verify_request_sender_as_github(request):
     Verify based on global secret, that request was actually signed by github
     """
     try:
-        data = await request.text()
+        data = await request.read()
         if not hmac.compare_digest(
-                request.headers['X_HUB_SIGNATURE'][5:].encode(),
+                request.headers['X-HUB-SIGNATURE'][5:],
                 hmac.new(secret, data, hashlib.sha1).hexdigest()):
             raise
     except Exception as e:
