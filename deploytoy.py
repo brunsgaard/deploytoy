@@ -36,7 +36,8 @@ async def handle_web_request(request):
         raise web.HTTPBadRequest(
             reason="'X-Github-Event' header missing")
 
-    request.headers['X-Github-Delivery']
+    # TODO
+    request.headers.get('X-Github-Delivery')
 
     await queue.put((event, request))
     return web.Response(status=201)
@@ -96,8 +97,6 @@ async def run(loop):
 
     loop.add_signal_handler(signal.SIGTERM, partial(close, app, server, loop))
     loop.add_signal_handler(signal.SIGINT, partial(close, app, server, loop))
-    signal.siginterrupt(signal.SIGTERM, False)
-    signal.siginterrupt(signal.SIGINT, False)
     logger.debug('Deploytoy has started')
 
 
