@@ -130,6 +130,7 @@ async def push(request):
 
     try:
         await asyncio.wait_for(proc.communicate(), 5*60)
+
     except asyncio.TimeoutError:
         proc.kill()
         logger.critical('Script timed out and was killed')
@@ -139,13 +140,15 @@ async def push(request):
         stdout = stdout.decode().strip()
         if stdout:
             logger.critical(stdout)
+    else:
+        logger.debug('{} was deployed'.format(prefix))
 
 
 if __name__ == '__main__':
 
     logger.setLevel(logging.DEBUG)
 
-    handler = logging.FileHandler('deploytoy.log')
+    handler = logging.FileHandler('/tmp/deploytoy.log')
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
