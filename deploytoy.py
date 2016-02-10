@@ -12,7 +12,7 @@ import sys
 logger = logging.getLogger('deploytoy')
 
 secret = sys.argv[1].encode()
-enforce_secret = False
+enforce_secret = True
 
 queue = asyncio.Queue()
 handlers = {}
